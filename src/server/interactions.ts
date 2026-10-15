@@ -3,6 +3,7 @@ import {
   ACTION_ID,
   LIMIT_TEXT,
   MODAL_CALLBACK_ID,
+  questionMessage,
   SKIP_TEXT,
   duplicateMessage,
   recommendationModal,
@@ -15,7 +16,7 @@ import {
   parseRecommendationForm,
   type SlackViewState,
 } from '@/lib/recommendation-form';
-import { postMessage, slackApi } from '@/server/slack-api';
+import { postMessage, slackApi, SlackApiError, updateMessage } from '@/server/slack-api';
 
 interface BlockActionsPayload {
   type: 'block_actions';
@@ -54,6 +55,8 @@ async function handleBlockAction(p: BlockActionsPayload): Promise<InteractionOut
   if (!action || !roundId || !channelId || !threadTs) return {};
 
   if (action.action_id === ACTION_ID.skip) {
+    // The skip button disappears after the first recommendation; ignore clicks from stale clients.
+    if ((await countByAuthor(roundId, p.user.id)) > 0) return {};
     await prisma.delivery.updateMany({
       where: { roundId, slackUserId: p.user.id },
       data: { status: 'SKIPPED' },
@@ -105,6 +108,9 @@ async function handleViewSubmission(p: ViewSubmissionPayload): Promise<Interacti
   });
   const isDuplicate = previous !== null;
 
+  const round = await prisma.round.findUnique({ where: { id: meta.roundId } });
+  if (!round) return {};
+
   await prisma.recommendation.create({
     data: {
       ...form.data,
@@ -122,7 +128,24 @@ async function handleViewSubmission(p: ViewSubmissionPayload): Promise<Interacti
   const reply = isDuplicate
     ? duplicateMessage(meta.roundId)
     : thanksMessage(form.data.candidateName, meta.roundId, env.COINS_BASE, env.COINS_BONUS);
-  return { after: () => postMessage(meta.channelId, reply, meta.threadTs).then(() => undefined) };
+  return {
+    after: async () => {
+      // The thread root is the weekly question: drop its skip button once someone was recommended.
+      await updateMessage(
+        meta.channelId,
+        meta.threadTs,
+        questionMessage(round.questionText, round.id, env.COINS_BASE, { allowSkip: false }),
+      ).catch((e: unknown) => {
+        console.error(
+          JSON.stringify({
+            msg: 'question_update_failed',
+            error: e instanceof SlackApiError ? e.code : 'unexpected',
+          }),
+        );
+      });
+      await postMessage(meta.channelId, reply, meta.threadTs);
+    },
+  };
 }
 
 export async function handleInteraction(payload: InteractionPayload): Promise<InteractionOutcome> {

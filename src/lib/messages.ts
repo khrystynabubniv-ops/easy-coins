@@ -15,30 +15,36 @@ export function escapeMrkdwn(value: string): string {
 const plain = (t: string) => ({ type: 'plain_text' as const, text: t, emoji: true });
 const mrkdwn = (t: string) => ({ type: 'mrkdwn' as const, text: t });
 
-export function questionMessage(question: string, roundId: string, coinsBase: number) {
+/** `allowSkip: false` is used once the person has recommended someone this week. */
+export function questionMessage(
+  question: string,
+  roundId: string,
+  coinsBase: number,
+  { allowSkip = true }: { allowSkip?: boolean } = {},
+) {
   const body = `🧠 *Питання тижня*\n${escapeMrkdwn(question)}\nЯкщо когось згадав — поділись, це хвилина. За кожну рекомендацію +${String(coinsBase)} коїнів.`;
+  const buttons: Record<string, unknown>[] = [
+    {
+      type: 'button',
+      style: 'primary',
+      action_id: ACTION_ID.open,
+      value: roundId,
+      text: plain('Згадати людину'),
+    },
+  ];
+  if (allowSkip) {
+    buttons.push({
+      type: 'button',
+      action_id: ACTION_ID.skip,
+      value: roundId,
+      text: plain('Пропустити цей тиждень'),
+    });
+  }
   return {
     text: `Питання тижня: ${question}`,
     blocks: [
       { type: 'section', text: mrkdwn(body) },
-      {
-        type: 'actions',
-        elements: [
-          {
-            type: 'button',
-            style: 'primary',
-            action_id: ACTION_ID.open,
-            value: roundId,
-            text: plain('Згадати людину'),
-          },
-          {
-            type: 'button',
-            action_id: ACTION_ID.skip,
-            value: roundId,
-            text: plain('Пропустити цей тиждень'),
-          },
-        ],
-      },
+      { type: 'actions', elements: buttons },
     ],
   };
 }

@@ -14,3 +14,18 @@ describe('messages', () => {
     expect(m.text).toContain('ще +15.');
   });
 });
+
+describe('questionMessage skip button', () => {
+  const actionIds = (m: ReturnType<typeof questionMessage>) =>
+    JSON.stringify(m.blocks).match(/recommend_[a-z]+/g);
+
+  it('shows both buttons by default', () => {
+    expect(actionIds(questionMessage('Q', 'r1', 5))).toEqual(['recommend_open', 'recommend_skip']);
+  });
+
+  it('hides the skip button after a recommendation', () => {
+    expect(actionIds(questionMessage('Q', 'r1', 5, { allowSkip: false }))).toEqual([
+      'recommend_open',
+    ]);
+  });
+});

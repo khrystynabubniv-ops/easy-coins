@@ -46,3 +46,11 @@ export async function postMessage(
   });
   return ts;
 }
+
+export async function updateMessage(
+  channel: string,
+  ts: string,
+  message: { text: string; blocks?: unknown[] },
+): Promise<void> {
+  await slackApi('chat.update', { channel, ts, ...message });
+}
