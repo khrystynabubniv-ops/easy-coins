@@ -41,6 +41,7 @@ model Delivery {
 enum ContactType {
   LINKEDIN
   TELEGRAM
+  OTHER // any other profile link (Instagram, GitHub, …)
 }
 
 enum Relation {

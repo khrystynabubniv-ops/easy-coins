@@ -33,7 +33,7 @@ export type Closeness = (typeof CLOSENESS_OPTIONS)[number]['value'];
 
 export const ERROR_TEXT = {
   contact:
-    'Додай, будь ласка, посилання на LinkedIn або @username у Telegram — так ми точно знайдемо людину',
+    'Додай, будь ласка, посилання на профіль людини (LinkedIn, Instagram тощо) або @username у Telegram — так ми точно знайдемо людину',
   reason:
     'Розкажи трохи більше: що саме ця людина зробила чи чим сильна? Це допоможе рекрутеру зрозуміти, куди її кликати',
   name: "Вкажи, будь ласка, ім'я та прізвище",

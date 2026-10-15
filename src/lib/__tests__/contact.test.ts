@@ -19,12 +19,18 @@ describe('parseContact', () => {
   });
 
   it.each([
-    '',
-    'jane doe',
-    'https://linkedin.com/company/acme',
-    '@abc',
-    'https://example.com/in/x',
-  ])('rejects %s', (input) => {
-    expect(parseContact(input)).toBeNull();
+    ['https://www.instagram.com/Jane.Doe/?igsh=abc', 'url:instagram.com/jane.doe'],
+    ['instagram.com/jane.doe', 'url:instagram.com/jane.doe'],
+    ['https://github.com/janedoe', 'url:github.com/janedoe'],
+    ['https://www.linkedin.com/feed/', 'url:linkedin.com/feed'],
+  ])('accepts any other link %s', (input, key) => {
+    expect(parseContact(input)).toEqual({ type: 'OTHER', key });
   });
+
+  it.each(['', 'олена', 'jane doe', '@abc', 'https://localhost/x', 'just text.'])(
+    'rejects %s',
+    (input) => {
+      expect(parseContact(input)).toBeNull();
+    },
+  );
 });

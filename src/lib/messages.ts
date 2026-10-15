@@ -113,8 +113,8 @@ export function recommendationModal(question: string, metadata: ModalMetadata) {
       {
         type: 'input',
         block_id: BLOCK.contact,
-        label: plain('LinkedIn або Telegram'),
-        hint: plain('Посилання linkedin.com/in/…, t.me/… або @username'),
+        label: plain('Посилання на профіль або Telegram'),
+        hint: plain('LinkedIn, Instagram чи будь-яке інше посилання, або @username у Telegram'),
         element: { type: 'plain_text_input', action_id: ACTION, max_length: 300 },
       },
       {
