@@ -15,16 +15,19 @@ Slack bot for the Universe Network «Easy Coins» programme. Once a week it asks
 strong professionals in their circle; answers arrive through a Slack modal, are stored in Notion,
 and the author receives coins through the Coin Awards API (shop.uni.tech).
 
-**Current state:** skeleton only. The service verifies Slack requests and acknowledges them.
-Business logic (weekly broadcast, modal, Notion, coins) comes in the next steps.
+**Current state:** weekly question in DM (Tue 11:00 Europe/Kyiv) to `ALLOWED_SLACK_IDS`,
+recommendation modal with validation, duplicate detection (by LinkedIn/Telegram) and a limit of
+3 recommendations per question. Recommendations are stored in Postgres with coins `PENDING`.
+Not yet: Notion «Банк питань» / participants / recommendations, Coin Awards API.
 
 ## Endpoints
 
-| Method | Path                      | Purpose                                                               |
-| ------ | ------------------------- | --------------------------------------------------------------------- |
-| POST   | `/api/slack/events`       | Slack Events API. Answers `url_verification`, logs other event types. |
-| POST   | `/api/slack/interactions` | Slack interactivity (`payload` form field). Acks immediately.         |
-| GET    | `/api/health`             | Railway healthcheck: `{ "ok": true, ... }`, 503 if the DB is down.    |
+| Method | Path                      | Purpose                                                                          |
+| ------ | ------------------------- | -------------------------------------------------------------------------------- |
+| POST   | `/api/slack/events`       | Slack Events API. Answers `url_verification`, logs other event types.            |
+| POST   | `/api/slack/interactions` | Slack interactivity (`payload` form field). Acks immediately.                    |
+| POST   | `/api/admin/broadcast`    | Manual send of this week's question (`Authorization: Bearer $ADMIN_API_SECRET`). |
+| GET    | `/api/health`             | Railway healthcheck: `{ "ok": true, ... }`, 503 if the DB is down.               |
 
 Both Slack endpoints verify `X-Slack-Signature` / `X-Slack-Request-Timestamp` against
 `SLACK_SIGNING_SECRET` over the raw body (HMAC-SHA256, timing-safe compare, 5-minute window)
@@ -49,5 +52,11 @@ npm run typecheck && npm run lint && npm run test && npm run build
 
 ## Environment variables
 
-See `.env.example`. `DATABASE_URL`, `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` are validated at
-boot in `src/lib/env.ts`. In production they are set in Railway → service → Variables.
+See `.env.example`. All variables are validated at boot in `src/lib/env.ts`. In production they are set in Railway → service → Variables.
+
+## Weekly schedule
+
+`src/instrumentation.ts` starts a one-minute ticker in the production server. On Tuesday from
+11:00 Kyiv time it creates the week's `Round` (ISO week, `2026-W42`) and sends the question once;
+the claim on `Round.scheduledSentAt` keeps it to one run across restarts. Slack bot scopes needed:
+`chat:write`, `im:write`.

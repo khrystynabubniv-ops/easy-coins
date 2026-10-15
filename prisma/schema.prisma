@@ -7,4 +7,86 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Tables for recommendations and coin awards are added in the next step.
+/// One question per ISO week (Europe/Kyiv). Later the question comes from the Notion «Банк питань».
+model Round {
+  id              String           @id @default(cuid())
+  weekKey         String           @unique // e.g. 2026-W42
+  questionText    String
+  scheduledSentAt DateTime? // set once the Tuesday broadcast ran for this round
+  createdAt       DateTime         @default(now())
+  deliveries      Delivery[]
+  recommendations Recommendation[]
+}
+
+enum DeliveryStatus {
+  SENT
+  SKIPPED
+}
+
+/// The weekly question message sent to one person.
+model Delivery {
+  id          String         @id @default(cuid())
+  roundId     String
+  slackUserId String
+  channelId   String
+  messageTs   String
+  status      DeliveryStatus @default(SENT)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  round       Round          @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, slackUserId])
+}
+
+enum ContactType {
+  LINKEDIN
+  TELEGRAM
+}
+
+enum Relation {
+  COLLEAGUE
+  MANAGER
+  REPORT
+  FRIEND
+  OTHER
+}
+
+enum Closeness {
+  VERY_WELL
+  WELL
+  SUPERFICIAL
+}
+
+enum CoinsStatus {
+  PENDING // awaiting Coin Awards API integration
+  AWARDED
+  FAILED
+  NOT_ELIGIBLE // duplicate candidate
+}
+
+model Recommendation {
+  id               String      @id @default(cuid())
+  roundId          String
+  authorSlackId    String
+  candidateName    String
+  contactType      ContactType
+  contactRaw       String
+  /// Normalised contact used for duplicate detection, e.g. `linkedin:jane-doe` or `telegram:janedoe`.
+  contactKey       String
+  reason           String
+  companyRole      String?
+  relation         Relation?
+  closeness        Closeness?
+  mayMentionAuthor Boolean     @default(false)
+  isDuplicate      Boolean     @default(false)
+  coinsAmount      Int         @default(0)
+  coinsStatus      CoinsStatus
+  notionPageId     String?
+  channelId        String
+  threadTs         String
+  createdAt        DateTime    @default(now())
+  round            Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([contactKey])
+  @@index([roundId, authorSlackId])
+}
