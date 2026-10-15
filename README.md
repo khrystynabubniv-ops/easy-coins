@@ -1,5 +1,16 @@
 # Easy Coins
 
+**Production:** https://easy-coins-production.up.railway.app
+
+**Railway:** https://railway.com/project/899c7022-ab45-4021-8514-9f01c776a8c4/service/c6826560-30ce-4135-9d0c-ca2e21e16d6a?environmentId=da610ff5-fdc9-4637-bfe0-cf64773f5bab
+
+**Railway workspace:** khrystynabubniv-ops's Projects (personal; to be moved to Universe Unicore)
+
+**Slack manifest URLs:**
+
+- `event_subscriptions.request_url`: https://easy-coins-production.up.railway.app/api/slack/events
+- `interactivity.request_url`: https://easy-coins-production.up.railway.app/api/slack/interactions
+
 Slack bot for the Universe Network «Easy Coins» programme. Once a week it asks people about
 strong professionals in their circle; answers arrive through a Slack modal, are stored in Notion,
 and the author receives coins through the Coin Awards API (shop.uni.tech).
